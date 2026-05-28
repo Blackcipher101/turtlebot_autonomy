@@ -29,6 +29,12 @@ gzserver --verbose \
   /ros2_ws/src/turtlebot3_sim/worlds/office_semantic.world &
 GZSERVER_PID=$!
 
+# Start gzclient only on Linux (macOS Docker lacks GPU passthrough — OOM risk)
+if [ "$(uname)" = "Linux" ] && [ -z "$SKIP_GZCLIENT" ]; then
+  echo "=== Starting gzclient ==="
+  gzclient --verbose 2>&1 | tee /tmp/gzclient.log &
+fi
+
 echo "=== Waiting for /spawn_entity ==="
 until ros2 service list 2>/dev/null | grep -q spawn_entity; do sleep 2; done
 
