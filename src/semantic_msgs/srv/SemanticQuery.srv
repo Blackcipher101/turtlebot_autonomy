@@ -1,0 +1,8 @@
+string query_text
+---
+bool success
+string matched_label
+float32 confidence
+geometry_msgs/PoseStamped goal_pose
+string[] known_locations
+string message

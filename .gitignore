@@ -1,0 +1,38 @@
+# Build artifacts
+build/
+install/
+log/
+*.pyc
+__pycache__/
+*.egg-info/
+dist/
+
+# Maps (large binary files)
+maps/*.pgm
+maps/*.yaml
+maps/*.json
+
+# Logs
+/tmp/
+*.log
+
+# Docker
+docker/volumes/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# ROS
+.catkin_tools/
+.ros/
+
+# Python
+*.pyo
+.env
+venv/

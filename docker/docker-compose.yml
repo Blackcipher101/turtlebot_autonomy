@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  ros2:
+    platform: linux/arm64
+    build:
+      context: .
+      dockerfile: Dockerfile
+      platforms:
+        - linux/arm64
+    image: turtlebot3-autonomy:humble
+    container_name: tb3_autonomy
+    privileged: true
+    network_mode: host
+    environment:
+      - DISPLAY=${DISPLAY:-host.docker.internal:0}
+      - TURTLEBOT3_MODEL=burger
+      - ROS_DOMAIN_ID=0
+      - GAZEBO_MODEL_PATH=/opt/ros/humble/share/turtlebot3_gazebo/models
+      - LIBGL_ALWAYS_SOFTWARE=${LIBGL_ALWAYS_SOFTWARE:-0}
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - ../src:/ros2_ws/src
+      - ../configs:/ros2_ws/configs
+      - ../maps:/ros2_ws/maps
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - tb3_build:/ros2_ws/build
+      - tb3_install:/ros2_ws/install
+      - tb3_log:/ros2_ws/log
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+  # Separate service for running Gazebo (GUI-heavy)
+  gazebo:
+    extends: ros2
+    container_name: tb3_gazebo
+    command: /bin/bash -c "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch turtlebot3_sim sim.launch.py"
+
+  # Separate service for RViz
+  rviz:
+    extends: ros2
+    container_name: tb3_rviz
+    command: /bin/bash -c "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch turtlebot3_sim rviz.launch.py"
+
+volumes:
+  tb3_build:
+  tb3_install:
+  tb3_log:

@@ -1,0 +1,306 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="office_semantic">
+
+    <!-- Lighting -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <physics name="default_physics" default="0" type="ode">
+      <max_step_size>0.01</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>100</real_time_update_rate>
+    </physics>
+
+    <!-- ===== OUTER WALLS (10m x 8m office) ===== -->
+    <!-- North wall -->
+    <model name="wall_north">
+      <static>true</static>
+      <pose>0 4 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>10 0.15 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>10 0.15 1</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- South wall -->
+    <model name="wall_south">
+      <static>true</static>
+      <pose>0 -4 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>10 0.15 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>10 0.15 1</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- East wall -->
+    <model name="wall_east">
+      <static>true</static>
+      <pose>5 0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.15 8 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.15 8 1</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- West wall -->
+    <model name="wall_west">
+      <static>true</static>
+      <pose>-5 0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.15 8 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.15 8 1</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- ===== INTERIOR DIVIDERS ===== -->
+    <!-- Horizontal divider (splits north/south halves), with gap for hallway -->
+    <model name="divider_h_west">
+      <static>true</static>
+      <pose>-2.5 0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>5 0.15 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>5 0.15 1</size></box></geometry>
+          <material><ambient>0.7 0.7 0.9 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <model name="divider_h_east">
+      <static>true</static>
+      <pose>3.5 0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>3 0.15 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>3 0.15 1</size></box></geometry>
+          <material><ambient>0.7 0.7 0.9 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- Vertical divider splitting kitchen/pantry (north side) -->
+    <model name="divider_v_north">
+      <static>true</static>
+      <pose>1 2 0.5 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>4 0.15 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>4 0.15 1</size></box></geometry>
+          <material><ambient>0.7 0.7 0.9 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- ===== KITCHEN ZONE (top-left: x=-5..1, y=0..4) ===== -->
+    <!-- Kitchen table 1 -->
+    <model name="kitchen_table_1">
+      <static>true</static>
+      <pose>-3.5 2.5 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.2 0.6 0.05</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1.2 0.6 0.05</size></box></geometry>
+          <material><ambient>0.6 0.4 0.2 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- Microwave-like box on table -->
+    <model name="microwave">
+      <static>true</static>
+      <pose>-3.5 2.5 0.65 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.5 0.35 0.3</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.5 0.35 0.3</size></box></geometry>
+          <material><ambient>0.3 0.3 0.3 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- Sink-like box -->
+    <model name="sink">
+      <static>true</static>
+      <pose>-4.5 3.5 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.6 0.4 0.6</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.6 0.4 0.6</size></box></geometry>
+          <material><ambient>0.7 0.7 0.8 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- Refrigerator-like box -->
+    <model name="refrigerator">
+      <static>true</static>
+      <pose>-4.5 1.5 0.9 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.7 0.7 1.8</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.7 0.7 1.8</size></box></geometry>
+          <material><ambient>0.85 0.85 0.9 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- Kitchen table 2 -->
+    <model name="kitchen_table_2">
+      <static>true</static>
+      <pose>-2 1.5 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.0 0.6 0.05</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1.0 0.6 0.05</size></box></geometry>
+          <material><ambient>0.6 0.4 0.2 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- ===== PANTRY (top-right: x=1..5, y=0..4) ===== -->
+    <!-- Shelf 1 -->
+    <model name="pantry_shelf_1">
+      <static>true</static>
+      <pose>4 3 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.3 1.5 1.0</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.3 1.5 1.0</size></box></geometry>
+          <material><ambient>0.5 0.35 0.15 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- Shelf 2 -->
+    <model name="pantry_shelf_2">
+      <static>true</static>
+      <pose>2.5 3.5 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.3 1.0 1.0</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.3 1.0 1.0</size></box></geometry>
+          <material><ambient>0.5 0.35 0.15 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- Pantry boxes -->
+    <model name="pantry_box_1">
+      <static>true</static>
+      <pose>3 2 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.4 0.4 0.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.4 0.4 0.5</size></box></geometry>
+          <material><ambient>0.8 0.6 0.2 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <model name="pantry_box_2">
+      <static>true</static>
+      <pose>4 1.5 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.4 0.4 0.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.4 0.4 0.5</size></box></geometry>
+          <material><ambient>0.3 0.7 0.3 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- ===== MEETING ROOM (bottom-left: x=-5..0, y=-4..0) ===== -->
+    <!-- Round meeting table (approximated with cylinder) -->
+    <model name="meeting_table">
+      <static>true</static>
+      <pose>-3 -2 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.7</radius><length>0.05</length></cylinder></geometry></collision>
+        <visual name="visual"><geometry><cylinder><radius>0.7</radius><length>0.05</length></cylinder></geometry>
+          <material><ambient>0.4 0.3 0.2 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- 4 chairs around the table -->
+    <model name="chair_1">
+      <static>true</static>
+      <pose>-3 -1 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.4 0.4 0.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.4 0.4 0.5</size></box></geometry>
+          <material><ambient>0.2 0.2 0.6 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <model name="chair_2">
+      <static>true</static>
+      <pose>-3 -3 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.4 0.4 0.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.4 0.4 0.5</size></box></geometry>
+          <material><ambient>0.2 0.2 0.6 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <model name="chair_3">
+      <static>true</static>
+      <pose>-2 -2 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.4 0.4 0.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.4 0.4 0.5</size></box></geometry>
+          <material><ambient>0.2 0.2 0.6 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <model name="chair_4">
+      <static>true</static>
+      <pose>-4 -2 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.4 0.4 0.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.4 0.4 0.5</size></box></geometry>
+          <material><ambient>0.2 0.2 0.6 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- Whiteboard/screen on wall -->
+    <model name="whiteboard">
+      <static>true</static>
+      <pose>-4.8 -2 0.7 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.05 1.5 0.9</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.05 1.5 0.9</size></box></geometry>
+          <material><ambient>0.95 0.95 0.95 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- ===== HALLWAY (bottom-right + center passage) ===== -->
+    <!-- Trash can -->
+    <model name="trash_can">
+      <static>true</static>
+      <pose>1.5 -1.5 0.3 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.2</radius><length>0.6</length></cylinder></geometry></collision>
+        <visual name="visual"><geometry><cylinder><radius>0.2</radius><length>0.6</length></cylinder></geometry>
+          <material><ambient>0.3 0.3 0.3 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- Plant pot -->
+    <model name="plant">
+      <static>true</static>
+      <pose>3.5 -1 0.3 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.25</radius><length>0.6</length></cylinder></geometry></collision>
+        <visual name="visual"><geometry><cylinder><radius>0.25</radius><length>0.6</length></cylinder></geometry>
+          <material><ambient>0.2 0.6 0.2 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- Hallway sofa -->
+    <model name="sofa">
+      <static>true</static>
+      <pose>4 -3 0.35 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.7 1.8 0.7</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.7 1.8 0.7</size></box></geometry>
+          <material><ambient>0.6 0.2 0.2 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <!-- Gazebo ROS plugins required for robot spawning and clock -->
+    <plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so">
+      <ros><namespace>/</namespace></ros>
+      <update_rate>1.0</update_rate>
+    </plugin>
+
+    <plugin name="gazebo_ros_factory" filename="libgazebo_ros_factory.so">
+      <ros><namespace>/</namespace></ros>
+    </plugin>
+
+  </world>
+</sdf>

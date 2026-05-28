@@ -1,0 +1,33 @@
+{
+  "name": "TurtleBot3 Autonomy (ROS2 Humble)",
+  "dockerComposeFile": ["../docker/docker-compose.yml"],
+  "service": "ros2",
+  "workspaceFolder": "/ros2_ws",
+  "remoteEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "TURTLEBOT3_MODEL": "burger",
+    "ROS_DOMAIN_ID": "0"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-iot.vscode-ros",
+        "ms-python.python",
+        "ms-vscode.cpptools",
+        "twxs.cmake",
+        "ms-vscode.cmake-tools",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "ros.distro": "humble",
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  "postCreateCommand": "bash /ros2_ws/scripts/build_workspace.sh 2>/dev/null || true",
+  "forwardPorts": [11345, 9090],
+  "mounts": [
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind"
+  ]
+}
