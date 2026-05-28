@@ -4,6 +4,8 @@
 
 Complete simulation stack for autonomous exploration, SLAM, custom RRT planning, and semantic navigation on TurtleBot3 Burger.
 
+**Docker image:** `nehalnevle/turtlebot3-autonomy:humble`
+
 ---
 
 ## Architecture
@@ -13,7 +15,7 @@ macOS (Apple Silicon)
 └── Docker (Ubuntu 22.04 ARM64)
     └── ROS2 Humble
         ├── turtlebot3_gazebo  ──── Simulation + LiDAR + Camera
-        ├── slam_toolbox       ──── Online async SLAM
+        ├── slam_toolbox       ──── Online sync SLAM
         ├── explore_lite       ──── Frontier-based exploration
         ├── nav2_bringup       ──── Navigation stack
         ├── rrt_planner        ──── Custom RRT* global planner (C++)
@@ -62,18 +64,30 @@ Open Docker Desktop → Settings:
 
 ---
 
-## Quick Start (3 commands)
+## Quick Start (VNC — recommended)
+
+Pull the pre-built image (no build needed):
 
 ```bash
-# 1. Build the Docker image (once, ~15-20 min first time)
-cd docker && docker compose build
+# 1. Pull image
+docker pull nehalnevle/turtlebot3-autonomy:humble
 
 # 2. Start container
-docker compose run --rm ros2
+docker compose -f docker/docker-compose.yml up -d
 
-# 3. Inside container: build workspace + launch full demo
+# 3. Launch full stack inside container
+docker exec -it tb3_sim /ros2_ws/scripts/start_vnc.sh
+```
+
+Then connect a VNC viewer to **`localhost:5900`** (no password). You'll see RViz2 with the robot autonomously mapping the office.
+
+### Alternative: Build from source (~15-20 min)
+
+```bash
+cd docker && docker compose build
+docker compose run --rm ros2
 bash /ros2_ws/scripts/build_workspace.sh
-bash /ros2_ws/scripts/launch_demo.sh full
+bash /ros2_ws/scripts/start_vnc.sh
 ```
 
 ---
@@ -195,41 +209,40 @@ No hardcoded label→room mappings. All inference is embedding-based.
 
 ## Troubleshooting
 
-### Gazebo black screen / RViz blank
+### VNC black screen
 ```bash
-# Try software rendering
-export LIBGL_ALWAYS_SOFTWARE=1
+docker exec tb3_sim ps aux | grep Xvfb   # confirm Xvfb is running
 ```
-Or in `docker-compose.yml` set `LIBGL_ALWAYS_SOFTWARE: "1"`.
+Reconnect VNC — server stays up, client reconnect always works.
 
-### XQuartz / display not working
+### Robot not moving / "All frontiers traversed" immediately
+The global costmap starts small (126×80 cells) and takes ~30s to grow. `start_vnc.sh` waits automatically. If it still happens, check:
 ```bash
-# Check XQuartz is running
-pgrep -x Xquartz
-
-# Re-allow connections
-xhost +localhost
-
-# Verify DISPLAY
-echo $DISPLAY  # should be :0
+docker exec tb3_sim bash -c "source /opt/ros/humble/setup.bash && ros2 topic echo /global_costmap/costmap --once 2>/dev/null | grep width"
+# Should be ≥200 before explore_lite starts
 ```
 
-### explore_lite not found
+### SLAM map frozen
 ```bash
-# If apt package unavailable, build from source:
-cd /ros2_ws/src
-git clone -b humble https://github.com/robo-friends/m-explore-ros2.git
-cd /ros2_ws && colcon build --packages-select explore_lite
+docker exec tb3_sim bash -c "source /opt/ros/humble/setup.bash && ros2 topic hz /scan"
+# Should show ~5 Hz
+docker exec tb3_sim cat /tmp/slam.log
 ```
 
-### Nav2 not starting
+### Nav2 "Planner failed" repeatedly
+Frontier landed inside inflated obstacle zone. Current config (tolerance: 2.0, inflation_radius: 0.15) handles most cases. If persists, reduce `min_frontier_size` in `src/m-explore-ros2/explore/config/params.yaml`.
+
+### Container OOM (exit code 137)
+Increase Docker Desktop memory to 10 GB+. Do NOT run gzclient — it's excluded from `start_vnc.sh` intentionally.
+
+### Nav2 not activating
 ```bash
-# Check all lifecycle nodes are active
-ros2 lifecycle list /bt_navigator
+docker exec tb3_sim cat /tmp/nav2.log | grep -E 'active|error|fail'
 ```
+`transform_timeout` warnings during startup are normal — wait 30s after Nav2 starts.
 
 ### Grounding-DINO slow on first inference
-Expected. Model loads ~10-20s. Subsequent inferences: 3-8s on M2 CPU. This is by design — inference runs sparsely.
+Expected. Model loads ~10-20s. Subsequent inferences: 3-8s on M2 CPU. Inference runs sparsely (every 1.5m or 30s).
 
 ---
 
