@@ -1,0 +1,33 @@
+version: "2.3"
+services:
+  m-explore-ros2-humble:
+    runtime: nvidia
+    build:
+      context: ../
+      dockerfile: .devcontainer/Dockerfile
+    working_dir: /workspace/ros_ws
+    user: dev
+    container_name: m_explore_ros2
+    network_mode: host
+    init: true
+    privileged: true
+    environment:
+      - DISPLAY=$DISPLAY
+      - QT_X11_NO_MITSHM=1
+      - UDEV=1
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,display
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      # Mount the m-explore-ros2 source into the workspace
+      - /home/phiserver/m-explore-ros2:/workspace/ros_ws/src/m-explore-ros2
+      # X11 for GUI (RViz2, Gazebo)
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      # Docker socket (optional, for nested docker)
+      - /var/run/docker.sock:/var/run/docker.sock
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    stdin_open: true
+    tty: true
+    command: "/bin/bash"
