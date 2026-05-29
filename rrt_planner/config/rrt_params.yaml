@@ -1,0 +1,22 @@
+rrt_planner_node:
+  ros__parameters:
+    # RRT* tree expansion
+    max_iterations: 5000      # max nodes before giving up
+    step_size: 0.10           # metres — how far each branch extends
+    goal_tolerance: 0.20      # metres — distance to declare goal reached
+    goal_bias: 0.15           # 15% chance to sample goal directly (speeds convergence)
+    rewire_radius: 0.50       # metres — RRT* rewiring neighbourhood
+
+    # Robot clearance
+    # TB3 burger radius = 0.089m (wheel to edge), using 0.12m for safety margin
+    # At 0.05m/cell resolution → inflates 3 cells around every obstacle
+    inflate_radius_m: 0.12
+
+    # Treat unknown map cells (-1) as free space?
+    # false = safer, true = more explorative in partially-known maps
+    allow_unknown: false
+
+    # Send computed path to Nav2 /follow_path to make robot drive along it
+    auto_follow: true
+
+    use_sim_time: false
