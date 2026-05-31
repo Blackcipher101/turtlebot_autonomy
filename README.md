@@ -217,13 +217,102 @@ Parameters (editable in `configs/nav2_params.yaml`):
 
 ## Semantic Navigation Details
 
-The semantic pipeline:
-1. Camera image → **Grounding-DINO-tiny** detects objects (sparse, every 1.5m or 30s)
-2. Object list → **CLIP ViT-B/32** embeds scene description → infers room type
-3. Room + objects → **NetworkX graph** (persisted to `/ros2_ws/maps/semantic_graph.json`)
-4. Text query → CLIP embeds query → cosine similarity to known rooms → Nav2 goal
+### System Design
 
-No hardcoded label→room mappings. All inference is embedding-based.
+The goal is to give the robot human-like memory: as it explores, it builds a spatial-semantic map it can later query in natural language ("Go to the kitchen"). No hardcoded label→room mappings — all retrieval is embedding-based.
+
+```
+Camera frame (sparse: every 1.5m or 30s)
+         │
+         ▼
+  ┌──────────────────┐
+  │  Grounding-DINO  │  Open-vocabulary object detection
+  │  (base, HF)      │  Input: image + dot-separated text vocab
+  └────────┬─────────┘  Output: {label, score, bbox} per object
+           │
+           ▼
+  ┌──────────────────┐
+  │  SAM (vit_h)     │  Instance segmentation (optional)
+  │                  │  Input: image + bboxes
+  └────────┬─────────┘  Output: per-object crops + masks
+           │
+           ▼
+  ┌──────────────────┐
+  │  CLIP ViT-B/32   │  Dual use:
+  │                  │  (a) embed each crop → (512,) image vector
+  │                  │  (b) zero-shot scene classification → room label
+  └────────┬─────────┘
+           │
+           ▼
+  ┌──────────────────────────────────────┐
+  │  SemanticGraph (NetworkX)            │
+  │  Node = {position (3D), clip_emb,    │
+  │           scene_type, blip_caption,  │
+  │           score, observations}       │
+  │  Edges:                              │
+  │   - spatial  : dist < 5.0 m         │
+  │   - semantic : cosine sim > 0.75    │
+  └────────┬─────────────────────────────┘
+           │
+           ▼
+  ┌──────────────────┐
+  │  Query at runtime│  Text query → CLIP text embedding
+  │                  │  → cosine sim vs all node image embeddings
+  │                  │  + BLIP caption word-overlap bonus (+0.05/word)
+  │                  │  + scene-type word match bonus (+0.08)
+  │                  │  → top-1 node position → Nav2 PoseStamped goal
+  └──────────────────┘
+```
+
+### Models
+
+| Model | Role | Notes |
+|---|---|---|
+| **Grounding-DINO-base** (`IDEA-Research/grounding-dino-base`) | Zero-shot object detection | Threshold 0.35; falls back to CPU if no CUDA; input vocab is dot-separated, e.g. `"chair . table . sink ."` |
+| **SAM vit_h** | Instance segmentation → crops | Optional — pipeline continues without it; degrades to bbox crops |
+| **CLIP ViT-B/32** | (a) image embeddings, (b) scene classification | Dual use; falls back to `openai/clip-vit-base-patch32` via `transformers` if `clip` package unavailable |
+| **BLIP-2** (optional) | Image captioning → text caption per node | Used as a word-overlap bonus signal during query scoring, not primary |
+
+### Query Scoring Formula
+
+```
+score = clip_cosine(text_query, node_image_emb)
+      + 0.05 × min(caption_word_overlap, 3)   # BLIP bonus
+      + 0.08                                   # if any query word ∈ scene_type
+```
+
+Result returned only if `score ≥ 0.20` (configurable `min_sim`).
+
+### Duplicate Merging
+
+Nodes that are both `< 1.5 m` apart **and** have cosine similarity `> 0.88` are merged: positions are averaged weighted by observation count, the better caption is kept.
+
+### Drawbacks and Edge Cases
+
+**Grounding-DINO**
+- Detection quality depends heavily on the text vocabulary passed at inference time. Objects outside the vocab are silently missed. The current vocab is a fixed list — a more robust approach would use a dynamic list derived from the room type being explored.
+- Inference is 4–8 s on M2 CPU (model runs every 1.5 m of travel or 30 s, so this rarely blocks navigation, but first-inference latency is ~20 s for model load).
+- Confidence threshold (0.35) is a single global value — fine-grained objects (e.g. small items on a shelf) are frequently missed; wide, textureless objects (walls, floors) can produce spurious detections.
+
+**SAM**
+- `vit_h` is the largest SAM variant — slow on CPU and requires ~6 GB RAM. If unavailable, the pipeline falls back to bbox crops, which reduces crop quality and therefore CLIP embedding accuracy.
+- SAM is used here for crop quality, not for 3D reconstruction — its masks are not used to estimate object volume or distance directly.
+
+**CLIP ViT-B/32**
+- ViT-B/32 is a relatively small CLIP model. Embeddings for visually similar rooms (e.g. kitchen vs. pantry, both containing shelves and counters) can have high cosine similarity, making disambiguation difficult.
+- Scene classification is zero-shot softmax over a fixed label set — it always picks *something*, even if confidence is low. A hallway glimpsed through a doorway can be mislabelled as the room behind it.
+- Text↔image cosine similarity is not calibrated to navigation relevance. A query like "Where I left my coffee" will return a result but the match will be meaningless.
+- No temporal consistency: each frame is processed independently, so the same object seen from two angles creates two separate nodes unless the duplicate-merge thresholds catch them.
+
+**Semantic Graph**
+- Query is O(N) linear scan — no spatial index. Acceptable for small maps (< 1000 nodes) but degrades on longer exploration runs.
+- Duplicate merging requires both spatial proximity **and** visual similarity. If the robot revisits a location from a very different angle, appearance changes enough that cosine < 0.88 and duplicates accumulate.
+- The `min_sim = 0.20` rejection threshold is low by design (avoids empty results on ambiguous queries), but it means weak matches can still trigger navigation to wrong locations.
+- Graph is serialized as a Python `pickle` file — not portable across Python/library versions.
+
+**3D Position Estimation**
+- World position is estimated via BEV projection from camera + nearest-timestamp LiDAR point cloud. If LiDAR and camera publish at different rates, the nearest-timestamp matching can pair a frame with a stale point cloud (e.g. robot has moved 0.5 m between scans).
+- No depth model — position accuracy depends entirely on LiDAR coverage of the object's location. Objects above the LiDAR scan plane (e.g. wall-mounted signs) get the robot's current position as a fallback, not the object's true 3D location.
 
 ---
 
