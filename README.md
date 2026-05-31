@@ -1,10 +1,42 @@
 # TurtleBot3 Semantic Autonomy Stack
 
-> ROS2 Humble · Gazebo 11 · macOS Apple Silicon · Docker
+> ROS2 Humble · Gazebo 11 · Isaac Sim 4.5 · macOS Apple Silicon · Docker
 
-Complete simulation stack for autonomous exploration, SLAM, custom RRT planning, and semantic navigation on TurtleBot3 Burger.
+Complete simulation stack for autonomous exploration, SLAM, custom RRT* planning, and semantic navigation on TurtleBot3 Burger.
 
 **Docker image:** `nehalnevle/turtlebot3-autonomy:humble`
+
+---
+
+## Implementation Status
+
+| Section | Status |
+|---|---|
+| **Section 1 — Exploration & SLAM** (slam_toolbox + explore_lite, RViz, saved map) | ✅ Complete |
+| **Section 2 — Semantic Reasoning** (Grounding-DINO + CLIP + NetworkX graph + Nav2 query) | ✅ Implemented — not fully end-to-end tested |
+| **Section 3 — Custom RRT\* Planner** (C++ Nav2 plugin, RViz MarkerArray, live robot following) | ✅ Complete |
+| **Bonus — Isaac Sim 4.5** (RTX LiDAR, SLAM, Nav2 in Isaac Sim via Docker) | ✅ Complete |
+
+> **Note on Section 2:** The semantic pipeline (perception → graph → query → Nav2 goal) is fully implemented — all nodes build and launch. However, it has not been fully tested end-to-end in simulation with a live exploration run. The architecture, ROS2 interfaces, and inference logic are complete; integration testing under full autonomy loop is pending.
+
+---
+
+## Screenshots
+
+**SLAM map building in RViz (Section 1)**
+![SLAM map in RViz](assets/screenshot_slam_rviz.png)
+
+**RRT\* planner tree visualized in RViz (Section 3)**
+![RRT* planner tree](assets/screenshot_gazebo_exploration.png)
+
+---
+
+## Videos
+
+| Recording | Description |
+|---|---|
+| [`demo_exploration.webm`](assets/demo_exploration.webm) | Autonomous exploration + SLAM in Gazebo |
+| [`screen_recording_may29.mov`](assets/screen_recording_may29.mov) | RRT\* planner visualization + robot navigation |
 
 ---
 
@@ -195,6 +227,23 @@ No hardcoded label→room mappings. All inference is embedding-based.
 
 ---
 
+## Isaac Sim Setup (Bonus)
+
+A parallel simulation setup using **NVIDIA Isaac Sim 4.5** is provided in `isaac_sim/`. It publishes the same ROS2 topics as Gazebo (`/scan`, `/odom`, `/camera/image_raw`, `/tf`) so the entire nav stack runs unchanged.
+
+See [`isaac_sim/ISAAC_SIM_SETUP.md`](isaac_sim/ISAAC_SIM_SETUP.md) for full instructions.
+
+Quick start:
+```bash
+# 1. Run Isaac Sim with the TurtleBot3 scene
+isaacsim --exec isaac_sim/turtlebot3_ros2_sim.py
+
+# 2. In Docker: launch SLAM + Nav2
+docker exec m_explore_ros2 bash /workspace/isaac_sim/launch_slam_astar.sh
+```
+
+---
+
 ## Gazebo World
 
 `office_semantic.world` contains four zones:
@@ -262,7 +311,9 @@ Expected. Model loads ~10-20s. Subsequent inferences: 3-8s on M2 CPU. Inference 
 
 ```
 turtlebot3-autonomy/
+├── assets/             # Screenshots and demo videos
 ├── docker/             # Dockerfile + docker-compose.yml
+├── isaac_sim/          # Isaac Sim 4.5 script + Nav2 config + setup guide
 ├── scripts/            # setup_mac.sh, build_workspace.sh, launch_demo.sh
 ├── .devcontainer/      # VSCode Dev Container config
 ├── configs/            # nav2_params.yaml, slam_toolbox_params.yaml, rviz/
